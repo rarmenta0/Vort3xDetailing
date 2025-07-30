@@ -1,12 +1,29 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useCallback } from 'react';
+import { BubbleScene } from '@/components/BubbleScene';
+import { HeroSection } from '@/components/HeroSection';
+import { ServicesSection } from '@/components/ServicesSection';
+import { ContactSection } from '@/components/ContactSection';
 
 const Index = () => {
+  const [bubbleTrigger, setBubbleTrigger] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+
+  const handleInteraction = useCallback((x: number, y: number) => {
+    setMousePosition({ x, y });
+    setBubbleTrigger(prev => prev + 1);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* 3D Bubble Scene */}
+      <BubbleScene triggerBurst={bubbleTrigger} mousePosition={mousePosition} />
+      
+      {/* Main Content */}
+      <main className="relative z-10">
+        <HeroSection onInteraction={handleInteraction} />
+        <ServicesSection onServiceHover={handleInteraction} />
+        <ContactSection onInteraction={handleInteraction} />
+      </main>
     </div>
   );
 };
