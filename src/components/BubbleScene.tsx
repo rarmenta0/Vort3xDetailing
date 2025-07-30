@@ -1,21 +1,32 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface BubbleProps {
   position: [number, number, number];
   delay: number;
+  scale: number;
   onComplete?: () => void;
 }
 
-const Bubble = ({ position, delay, onComplete }: BubbleProps) => {
-  const ref = useRef<THREE.Mesh>(null);
+const Bubble = ({ position, delay, scale, onComplete }: BubbleProps) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.MeshPhongMaterial>(null);
   const [startTime] = useState(() => Date.now() + delay * 1000);
   const [isVisible, setIsVisible] = useState(false);
 
+  // Create stable geometry and material
+  const geometry = useMemo(() => new THREE.SphereGeometry(scale, 16, 16), [scale]);
+  const material = useMemo(() => new THREE.MeshPhongMaterial({
+    color: 0x4da6ff,
+    transparent: true,
+    opacity: 0,
+    shininess: 100,
+    specular: 0x4444aa
+  }), []);
+
   useFrame(() => {
-    if (!ref.current) return;
+    if (!meshRef.current || !materialRef.current) return;
 
     const elapsed = (Date.now() - startTime) / 1000;
     
@@ -29,22 +40,21 @@ const Bubble = ({ position, delay, onComplete }: BubbleProps) => {
       const yPos = position[1] + Math.sin(progress * Math.PI * 2) * 0.5;
       const wobble = Math.sin(elapsed * 2) * 0.1;
       
-      ref.current.position.set(
+      meshRef.current.position.set(
         position[0] + wobble,
         yPos + progress * 15 - 7.5,
         position[2]
       );
 
       // Scale animation
-      const scale = Math.min(1, elapsed * 2) * (0.3 + Math.sin(elapsed * 3) * 0.1);
-      ref.current.scale.setScalar(scale);
+      const currentScale = Math.min(1, elapsed * 2) * (0.8 + Math.sin(elapsed * 3) * 0.2);
+      meshRef.current.scale.setScalar(currentScale);
 
-      // Fade out at the end
-      const material = ref.current.material as THREE.MeshPhongMaterial;
+      // Opacity animation
       if (progress > 0.9) {
-        material.opacity = (1 - progress) * 10;
+        materialRef.current.opacity = Math.max(0, (1 - progress) * 10);
       } else {
-        material.opacity = 0.6 + Math.sin(elapsed * 2) * 0.2;
+        materialRef.current.opacity = Math.min(0.8, 0.3 + Math.sin(elapsed * 2) * 0.3);
       }
 
       // Reset when complete
@@ -54,16 +64,19 @@ const Bubble = ({ position, delay, onComplete }: BubbleProps) => {
     }
   });
 
+  if (!isVisible) return null;
+
   return (
-    <Sphere ref={ref} args={[0.1 + Math.random() * 0.2]} position={position} visible={isVisible}>
-      <meshPhongMaterial
-        color={new THREE.Color().setHSL(0.55 + Math.random() * 0.1, 0.8, 0.7)}
-        transparent
+    <mesh ref={meshRef} geometry={geometry}>
+      <meshPhongMaterial 
+        ref={materialRef} 
+        color={0x4da6ff}
+        transparent={true}
         opacity={0}
         shininess={100}
-        specular={new THREE.Color(0x4444aa)}
+        specular={0x4444aa}
       />
-    </Sphere>
+    </mesh>
   );
 };
 
@@ -73,34 +86,41 @@ interface BubbleSceneProps {
 }
 
 export const BubbleScene = ({ triggerBurst, mousePosition }: BubbleSceneProps) => {
-  const [bubbles, setBubbles] = useState<Array<{ id: number; position: [number, number, number]; delay: number }>>([]);
+  const [bubbles, setBubbles] = useState<Array<{ 
+    id: number; 
+    position: [number, number, number]; 
+    delay: number;
+    scale: number;
+  }>>([]);
   const bubbleIdRef = useRef(0);
 
   useEffect(() => {
-    // Initial bubbles on load
-    const initialBubbles = Array.from({ length: 20 }, (_, i) => ({
+    // Initial bubbles on load - limit the number to prevent WebGL issues
+    const initialBubbles = Array.from({ length: 10 }, (_, i) => ({
       id: bubbleIdRef.current++,
       position: [
-        (Math.random() - 0.5) * 20,
-        Math.random() * 10 - 5,
-        (Math.random() - 0.5) * 10
+        (Math.random() - 0.5) * 15,
+        Math.random() * 8 - 4,
+        (Math.random() - 0.5) * 8
       ] as [number, number, number],
-      delay: i * 0.2
+      delay: i * 0.3,
+      scale: 0.1 + Math.random() * 0.15
     }));
     setBubbles(initialBubbles);
   }, []);
 
   useEffect(() => {
     if (triggerBurst > 0) {
-      // Add burst of bubbles near mouse position
-      const newBubbles = Array.from({ length: 8 }, (_, i) => ({
+      // Add fewer bubbles to prevent overload
+      const newBubbles = Array.from({ length: 5 }, (_, i) => ({
         id: bubbleIdRef.current++,
         position: [
-          (mousePosition.x - 0.5) * 10 + (Math.random() - 0.5) * 3,
-          (mousePosition.y - 0.5) * -10 + (Math.random() - 0.5) * 3,
-          (Math.random() - 0.5) * 5
+          (mousePosition.x - 0.5) * 8 + (Math.random() - 0.5) * 2,
+          (mousePosition.y - 0.5) * -8 + (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 4
         ] as [number, number, number],
-        delay: i * 0.1
+        delay: i * 0.1,
+        scale: 0.08 + Math.random() * 0.12
       }));
       
       setBubbles(prev => [...prev, ...newBubbles]);
@@ -110,17 +130,23 @@ export const BubbleScene = ({ triggerBurst, mousePosition }: BubbleSceneProps) =
   const handleBubbleComplete = (id: number) => {
     setBubbles(prev => prev.filter(bubble => bubble.id !== id));
     
-    // Add a new bubble to keep the scene active
-    const newBubble = {
-      id: bubbleIdRef.current++,
-      position: [
-        (Math.random() - 0.5) * 20,
-        -8,
-        (Math.random() - 0.5) * 10
-      ] as [number, number, number],
-      delay: Math.random() * 2
-    };
-    setBubbles(prev => [...prev, newBubble]);
+    // Only add new bubble if we don't have too many
+    setBubbles(prev => {
+      if (prev.length < 15) {
+        const newBubble = {
+          id: bubbleIdRef.current++,
+          position: [
+            (Math.random() - 0.5) * 15,
+            -6,
+            (Math.random() - 0.5) * 8
+          ] as [number, number, number],
+          delay: Math.random() * 1,
+          scale: 0.1 + Math.random() * 0.15
+        };
+        return [...prev, newBubble];
+      }
+      return prev;
+    });
   };
 
   return (
@@ -135,16 +161,18 @@ export const BubbleScene = ({ triggerBurst, mousePosition }: BubbleSceneProps) =
         pointerEvents: 'none',
         zIndex: 1
       }}
+      gl={{ antialias: false, alpha: true }}
+      dpr={Math.min(window.devicePixelRatio, 2)}
     >
-      <ambientLight intensity={0.3} />
-      <pointLight position={[10, 10, 10]} intensity={0.8} color="#4da6ff" />
-      <pointLight position={[-10, -10, 5]} intensity={0.5} color="#80d4ff" />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[5, 5, 5]} intensity={0.6} color="#4da6ff" />
       
       {bubbles.map((bubble) => (
         <Bubble
           key={bubble.id}
           position={bubble.position}
           delay={bubble.delay}
+          scale={bubble.scale}
           onComplete={() => handleBubbleComplete(bubble.id)}
         />
       ))}
