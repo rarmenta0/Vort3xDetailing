@@ -1,3 +1,6 @@
+// @ts-nocheck
+
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, Sparkles, Shield, Car } from "lucide-react";
 

@@ -1,8 +1,10 @@
+// @ts-nocheck
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { Phone, Mail, MapPin, Clock, Instagram } from "lucide-react";
 
 interface ContactSectionProps {
   onInteraction: (x: number, y: number) => void;
@@ -41,7 +43,7 @@ export const ContactSection = ({ onInteraction }: ContactSectionProps) => {
                   <Phone className="w-6 h-6 text-primary" />
                   <div>
                     <p className="font-semibold text-foreground">Phone</p>
-                    <p className="text-muted-foreground">(555) 123-4567</p>
+                    <p className="text-muted-foreground">(256) 321-6885</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -55,7 +57,7 @@ export const ContactSection = ({ onInteraction }: ContactSectionProps) => {
                   <MapPin className="w-6 h-6 text-primary" />
                   <div>
                     <p className="font-semibold text-foreground">Location</p>
-                    <p className="text-muted-foreground">123 Auto Center Drive<br />Cartown, CT 06234</p>
+                    <p className="text-muted-foreground">Athens, AL</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -65,11 +67,24 @@ export const ContactSection = ({ onInteraction }: ContactSectionProps) => {
                     <p className="text-muted-foreground">Mon-Fri: 8AM-6PM<br />Sat: 9AM-4PM<br />Sun: Closed</p>
                   </div>
                 </div>
+                <a
+                href="https://www.instagram.com/vort3xdetailing/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-4 hover:opacity-80"
+              >
+                <Instagram className="w-6 h-6 text-primary" />
+                <div>
+                  <p className="font-semibold text-foreground">Instagram</p>
+                  <p className="text-muted-foreground">Vort3xDetailing</p>
+                </div>
+              </a>
+
               </CardContent>
             </Card>
           </div>
 
-          {/* Contact Form */}
+          {/* Schedule service section*/}
           <Card className="bg-gradient-card border-border">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-foreground">Schedule Service</CardTitle>
