@@ -17,12 +17,13 @@ const services = [
     description: "Professional paint correction to restore your vehicle's finish",
     features: ["Swirl removal", "Scratch repair", "Paint polishing", "Clear coat restoration"]
   },
-  {
+  /* {
     icon: <Shield className="w-8 h-8 text-primary" />,
     title: "Ceramic Coating",
     description: "Long-lasting protection with our premium ceramic coating",
     features: ["Paint protection", "Hydrophobic coating", "UV protection", "Easy maintenance"]
   },
+  */
   {
     icon: <Car className="w-8 h-8 text-accent" />,
     title: "Full Detail",
